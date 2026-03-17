@@ -1,0 +1,116 @@
+import bpy
+import math
+
+def create_ventilateur_ajuste():
+    # Nettoyage
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete()
+
+    # --- PARAMÈTRES ---
+    centre = (0.32, 0.8, 0.4)
+    nb_pales = 6
+    long_pale = 0.10
+    larg_pale = 0.034
+    epaisseur = 0.002
+    angle_inclinaison = math.radians(30)
+    rayon_moyeu = 0.02
+    # On fait pénétrer la pale de 2mm dans le moyeu pour qu'il n'y ait pas de jour
+    overlap = 0.002 
+
+    bpy.context.scene.cursor.location = centre
+
+    # 1. CRÉATION DU MOYEU
+    bpy.ops.mesh.primitive_cylinder_add(
+        radius=rayon_moyeu, 
+        depth=0.015, # Un peu plus épais pour bien tenir les pales
+        location=centre,
+        rotation=(math.radians(90), 0, 0)
+    )
+    moyeu = bpy.context.active_object
+
+    # 2. CRÉATION DES PALES
+    for i in range(nb_pales):
+        bpy.ops.mesh.primitive_cube_add(size=1.0)
+        pale = bpy.context.active_object
+        
+        # Dimensions
+        pale.scale[0] = long_pale / 2
+        pale.scale[1] = epaisseur / 2
+        pale.scale[2] = larg_pale / 2
+        bpy.ops.object.transform_apply(scale=True)
+        
+        # POSITIONNEMENT : on soustrait l'overlap pour qu'elle entre dans le moyeu
+        pale.location = (centre[0] + rayon_moyeu + (long_pale/2) - overlap, centre[1], centre[2])
+        
+        # INCLINAISON
+        pale.rotation_euler[0] = angle_inclinaison
+        bpy.ops.object.transform_apply(rotation=True)
+        
+        # ROTATION CIRCULAIRE
+        bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+        pale.rotation_euler[1] = math.radians(i *
+
+
+
+
+import bpy
+import math
+
+def create_ventilateur_parfait():
+    # 1. NETTOYAGE
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete()
+
+    # --- PARAMÈTRES ---
+    centre = (0.32, 0.8, 0.4)
+    nb_pales = 6
+    long_pale = 0.10        # 10 cm
+    larg_pale = 0.034       # 3.4 cm
+    epaisseur = 0.002       # 2 mm
+    angle_inclinaison = math.radians(30)
+    rayon_moyeu = 0.02      # 2 cm
+
+    # Fixer le curseur 3D
+    bpy.context.scene.cursor.location = centre
+
+    # 2. MOYEU
+    bpy.ops.mesh.primitive_cylinder_add(
+        radius=rayon_moyeu, 
+        depth=0.015, 
+        location=centre,
+        rotation=(math.radians(90), 0, 0)
+    )
+    moyeu = bpy.context.active_object
+
+    # 3. PALES
+    for i in range(nb_pales):
+        # On crée la pale directement au CENTRE du ventilateur
+        bpy.ops.mesh.primitive_cube_add(size=1.0, location=centre)
+        pale = bpy.context.active_object
+        
+        # Mise à l'échelle
+        pale.scale = (long_pale/2, epaisseur/2, larg_pale/2)
+        bpy.ops.object.transform_apply(scale=True)
+        
+        # INCLINAISON (30°)
+        pale.rotation_euler[0] = angle_inclinaison
+        bpy.ops.object.transform_apply(rotation=True)
+
+        # DÉCALAGE : On déplace les points de la pale vers l'extérieur 
+        # pour qu'elle commence à l'intérieur du moyeu (rayon_moyeu - 1mm de sécurité)
+        decalage = rayon_moyeu + (long_pale / 2) - 0.001
+        
+        # On déplace l'objet sur son axe X local
+        bpy.ops.transform.translate(value=(decalage, 0, 0), constraint_axis=(True, False, False), orient_type='LOCAL')
+
+        # ROTATION CIRCULAIRE autour de l'axe Y (via le curseur 3D au centre)
+        bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+        pale.rotation_euler[1] = math.radians(i * 60)
+
+    # Union finale
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.join()
+    bpy.context.active_object.name = "Ventilateur_Final"
+
+create_ventilateur_parfait()
+
